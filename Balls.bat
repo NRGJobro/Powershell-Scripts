@@ -1,64 +1,43 @@
 @echo off
-setlocal enabledelayedexpansion
+color 0A
 
-REM Define the API endpoint and your API key
-set "API_URL=https://api.openai.com/v1/chat/completions"
-set "API_KEY=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"
+set /p QUESTION_NUMBER=What Forensic Question number do you want (Ex: 1, 2, 3...)? 
 
-REM Prompt the user for instructions
-set "USER_PROMPT=You are a Cyber Security professional. Please analyze this text and tell me what to do and the commands I need to execute etc. These are for Windows. Do NOT try to format anything"
+set INPUT_FILE=Forensics Question %QUESTION_NUMBER%.txt
 
-REM Read the prompt from the file and set the variable
-set "fileContent="
-for /f "usebackq delims=" %%i in ("Forensics Question 1.txt") do (
-    set "fileContent=!fileContent! %%i"
+rem Check if the input file exists
+if not exist "%INPUT_FILE%" (
+    echo File "%INPUT_FILE%" not found. Please make sure the file exists in the current directory.
+    pause
+    exit /b
 )
 
-REM Construct the JSON data for the first request
-set "JSON_DATA={\"model\":\"gpt-4o-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"!USER_PROMPT! !fileContent!\"}]}" 
+set API_KEY=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
+set TEXT_INPUT=Please analyze the following file and provide ONLY the PowerShell script commands needed to solve the problem described. Ensure that the script reads input from "%INPUT_FILE%" and outputs the result to "Answer.txt".
 
-REM Debugging: Output the JSON_DATA
-REM echo !JSON_DATA!
+rem Use PowerShell to read the content of the file and append it to TEXT_INPUT
+powershell -Command "$content = Get-Content -Raw -Path '%INPUT_FILE%'; [System.IO.File]::WriteAllText('TempRequest.json', '{\"model\":\"gpt-4o-mini\",\"messages\":[{\"role\":\"system\",\"content\":\"You are a helpful assistant specializing in coding and cybersecurity.\"},{\"role\":\"user\",\"content\":\"' + '%TEXT_INPUT%' + ' ' + $content.Replace('\"', '\\\"') + '\"}]}' )"
 
-REM Make the API request
-curl -X POST "%API_URL%" ^
-     -H "Content-Type: application/json" ^
-     -H "Authorization: Bearer %API_KEY%" ^
-     -d "!JSON_DATA!" > response.txt
+rem Make the API call and store the response in a temporary file
+curl -s -X POST "https://api.openai.com/v1/chat/completions" ^
+    -H "Content-Type: application/json" ^
+    -H "Authorization: Bearer %API_KEY%" ^
+    -d "@TempRequest.json" > TempJsonResponse.txt
 
-REM Check if curl command was successful
-if %errorlevel% neq 0 (
-    echo Error: Curl command failed. Check the output above.
-    exit /b 1
-)
+rem Extract the API response and save it to OutputSolution.ps1
+powershell -Command "try { $response = Get-Content TempJsonResponse.txt | ConvertFrom-Json; if ($response.choices.Count -gt 0) { $scriptContent = $response.choices[0].message.content -replace '```powershell', '' -replace '```', '' -replace 'Here', '' -replace 'Make sure to run the script', ''; $scriptContent | Out-File -FilePath 'OutputSolution.ps1' -Encoding utf8 } else { 'No choices available in the response.' | Out-File -FilePath 'OutputSolution.ps1' -Encoding utf8 } } catch { 'Error parsing JSON response: ' + $_ | Out-File -FilePath 'OutputSolution.ps1' -Encoding utf8 }"
 
-REM Parse the JSON response and output the content to response.txt
-powershell -Command "try { $response = Get-Content response.txt | ConvertFrom-Json; if ($response.choices.Count -gt 0) { $response.choices[0].message.content | Out-File response.txt -Encoding utf8 } else { 'No choices available in the response.' | Out-File response.txt -Encoding utf8 } } catch { 'Error parsing JSON response: ' + $_ | Out-File response.txt -Encoding utf8 }"
+rem Clean up temporary files
+del TempJsonResponse.txt
+del TempRequest.json
 
-REM Second request
-set "fileContent2="
-for /f "usebackq delims=" %%i in ("response.txt") do (
-    set "fileContent2=!fileContent2! %%i"
-)
+rem Run the generated PowerShell script
+powershell -ExecutionPolicy Bypass -File OutputSolution.ps1
 
-REM Prompt the user for instructions for the second request
-set "USER_PROMPT2=Based on the following analysis, generate .bat script CODE ONLY containing the necessary commands. Do NOT try to format the script with three backticks: "
+rem Delete the ps1 file after giving the answer
+del OutputSolution.ps1
 
-REM Construct the JSON data for the second request
-set "JSON_DATA2={\"model\":\"gpt-4o-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"!USER_PROMPT2! !fileContent2!\"}]}" 
+rem Open the generated Answer.txt file
+start Answer.txt
 
-REM Debugging: Output the JSON_DATA2
-REM echo !JSON_DATA2!
-
-REM Make the second API request
-curl -X POST "%API_URL%" ^
-     -H "Content-Type: application/json" ^
-     -H "Authorization: Bearer %API_KEY%" ^
-     -d "!JSON_DATA2!" > final.bat
-
-REM Parse the JSON response and output the content to final.bat
-powershell -Command "try { $response = Get-Content final.bat | ConvertFrom-Json; if ($response.choices.Count -gt 0) { $response.choices[0].message.content | Out-File final.bat -Encoding utf8 } else { 'No choices available in the response.' | Out-File final.bat -Encoding utf8 } } catch { 'Error parsing JSON response: ' + $_ | Out-File final.bat -Encoding utf8 }"
-
-del "response.txt"
-
-pause
+exit
