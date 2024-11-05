@@ -12,7 +12,7 @@ if not exist "%INPUT_FILE%" (
     exit /b
 )
 
-set API_KEY=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
+set API_KEY=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
 set TEXT_INPUT=Please analyze the following file and provide ONLY the PowerShell script commands needed to solve the problem described. Ensure that the script reads input from "%INPUT_FILE%" and outputs the result to "Answer.txt".
 
 rem Use PowerShell to read the content of the file and append it to TEXT_INPUT
