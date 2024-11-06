@@ -801,16 +801,49 @@ If ($ManageUsers -eq "Y") {
     Write-Host "Skipping local user account management."
 }
 
+# ----------------------------------------------------
+# Ask User if They Want to start back up the disabled shit
+# ----------------------------------------------------
 
+# Prompt User to Clean Up and Restart
+$cleanupResponse = Read-Host "Do you want to re-enable the firewall and shit? (yes/no)"
+if ($cleanupResponse -eq "yes") {
+    Start-Job -ScriptBlock {
+        try {
+  	  # Enable Windows Defender ATP with PowerShell
+   	 Set-MpPreference -EnableControlledFolderAccess Enabled -ErrorAction Stop
+  	  Write-Output "Controlled folder access enabled."
+        
+ 	   # Enable cloud-delivered protection and automatic sample submission
+ 	   Set-MpPreference -MAPSReporting Advanced -SubmitSamplesConsent SendSafeSamples -ErrorAction Stop
+  	  Write-Output "Cloud-delivered protection and automatic sample submission enabled."
+        
+ 	   # Turn on real-time protection
+ 	   Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction Stop
+ 	   Write-Output "Real-time protection enabled."
+	} catch {
+	    Write-Output "Failed to configure Windows Defender ATP: $($_.Exception.Message)"
+	}
+	Write-Output "Windows Defender ATP configuration completed."
+    }
+} else {
+    Write-Output "Didnt start the goofy shit!"
+}
 
 # ----------------------------------------------------
 # Ask User if They Want to Restart
 # ----------------------------------------------------
 
-$restartResponse = Read-Host "Do you want to restart the computer now? (yes/no)"
-if ($restartResponse -eq "yes") {
-    Write-Output "Restarting the computer..."
-    Restart-Computer -Force
+# Prompt User to Clean Up and Restart
+$cleanupResponse = Read-Host "Do you want to clean up temporary files and restart the system? (yes/no)"
+if ($cleanupResponse -eq "yes") {
+    Start-Job -ScriptBlock {
+        Write-Output "Cleaning up temporary files..."
+        Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Output "Temporary files cleaned up."
+        Write-Output "Restarting the system..."
+        Restart-Computer -Force
+    }
 } else {
-    Write-Output "Restart postponed by the user."
+    Write-Output "Cleanup and restart skipped."
 }
