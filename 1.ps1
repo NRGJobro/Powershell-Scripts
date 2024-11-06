@@ -14,6 +14,43 @@ Write-Output "Controlled Folder Access configuration completed."
 
 
 # ----------------------------------------------------
+# Command 13: Remove Netcat Backdoor if It Exists
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    # Find and stop Netcat process if it is running
+    if (Get-Process -Name "nc" -ErrorAction SilentlyContinue) {
+        Stop-Process -Name "nc" -Force
+        Write-Output "Netcat process stopped."
+    } else {
+        Write-Output "Netcat process not found."
+    }
+    
+    # Find and remove Netcat executable if it exists
+    $netcatPaths = Get-ChildItem -Path "C:\" -Filter "nc.exe" -Recurse -ErrorAction SilentlyContinue
+    if ($netcatPaths) {
+        $netcatPaths | Remove-Item -Force
+        Write-Output "Netcat backdoor removed."
+    } else {
+        Write-Output "No Netcat backdoor found."
+    }
+}
+
+# ----------------------------------------------------
+# Command 10: Remove Prohibited MP3 Files if They Exist
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    $mp3Files = Get-ChildItem -Path "C:\" -Filter "*.mp3" -Recurse -ErrorAction SilentlyContinue
+    if ($mp3Files) {
+        $mp3Files | Remove-Item -Force
+        Write-Output "Prohibited MP3 files removed."
+    } else {
+        Write-Output "No prohibited MP3 files found."
+    }
+}
+
+# ----------------------------------------------------
 # Command 1: Start Windows Updates (Run in Background)
 # ----------------------------------------------------
 
@@ -167,19 +204,7 @@ Start-Job -ScriptBlock {
     }
 }
 
-# ----------------------------------------------------
-# Command 10: Remove Prohibited MP3 Files if They Exist
-# ----------------------------------------------------
 
-Start-Job -ScriptBlock {
-    $mp3Files = Get-ChildItem -Path "C:\" -Filter "*.mp3" -Recurse -ErrorAction SilentlyContinue
-    if ($mp3Files) {
-        $mp3Files | Remove-Item -Force
-        Write-Output "Prohibited MP3 files removed."
-    } else {
-        Write-Output "No prohibited MP3 files found."
-    }
-}
 
 # ----------------------------------------------------
 # Command 11: Close and Uninstall TeamViewer if It Exists
@@ -238,28 +263,7 @@ Start-Job -ScriptBlock {
 }
 
 
-# ----------------------------------------------------
-# Command 13: Remove Netcat Backdoor if It Exists
-# ----------------------------------------------------
 
-Start-Job -ScriptBlock {
-    # Find and stop Netcat process if it is running
-    if (Get-Process -Name "nc" -ErrorAction SilentlyContinue) {
-        Stop-Process -Name "nc" -Force
-        Write-Output "Netcat process stopped."
-    } else {
-        Write-Output "Netcat process not found."
-    }
-    
-    # Find and remove Netcat executable if it exists
-    $netcatPaths = Get-ChildItem -Path "C:\" -Filter "nc.exe" -Recurse -ErrorAction SilentlyContinue
-    if ($netcatPaths) {
-        $netcatPaths | Remove-Item -Force
-        Write-Output "Netcat backdoor removed."
-    } else {
-        Write-Output "No Netcat backdoor found."
-    }
-}
 
 # ----------------------------------------------------
 # Command 14: Enable RDP Network Level Authentication
