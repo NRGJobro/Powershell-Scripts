@@ -584,6 +584,111 @@ Start-Job -ScriptBlock {
     Write-Output "Global object creation restriction completed."
 }
 
+# ----------------------------------------------------
+# Command 30: Disable Wi-Fi Sense Settings
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Set-ItemProperty -Path "HKLM:\Software\Microsoft\WcmSvc\wifinetworkmanager\config" -Name "AutoConnectAllowedOEM" -Value 0
+}
+
+# ----------------------------------------------------
+# Command 31: Disable Unnecessary Network Services (IPv6, QoS)
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Get-NetAdapter | ForEach-Object {
+        Disable-NetAdapterBinding -Name $_.Name -ComponentID "ms_tcpip6"  # Disable IPv6
+        Disable-NetAdapterBinding -Name $_.Name -ComponentID "ms_pacer"   # Disable QoS Packet Scheduler
+    }
+}
+
+# ----------------------------------------------------
+# Command 32: Uncheck "Register This Connection's Address in DNS"
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Get-NetAdapter | Set-DnsClient -RegisterThisConnectionsAddress $false
+}
+
+# ----------------------------------------------------
+# Command 33: Disable NETBIOS over TCP/IP
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Get-WmiObject -Query "SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = True" | ForEach-Object {
+    $_.SetTcpipNetbios(2)
+    }
+}
+
+# ----------------------------------------------------
+# Command 34: Disable Port 1900 UPnP
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    netsh advfirewall firewall add rule name="Block UPnP Port 1900" protocol=UDP dir=in localport=1900 action=block
+}
+
+# ----------------------------------------------------
+# Command 35: Stop and Disable UPnP Device Host Service
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Set-Service -Name "upnphost" -StartupType Disabled
+    Stop-Service -Name "upnphost" -Force
+}
+
+# ----------------------------------------------------
+# Command 36: Stop and Disable SNMP Trap Service
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Set-Service -Name "SNMPTRAP" -StartupType Disabled
+    Stop-Service -Name "SNMPTRAP" -Force
+}
+
+# ----------------------------------------------------
+# Command 37: Never Enable Telnet, SNMP, RIP Listener, NFS, IIS, SMB v1
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Disable-WindowsOptionalFeature -Online -FeatureName "TelnetClient" -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName "SNMP" -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName "RIP Listener" -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName "NFS" -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName "IIS" -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol" -NoRestart
+}
+
+# ----------------------------------------------------
+# Command 38: Restrict Shared Folders to ADMIN$, C$, IPC$
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Get-SmbShare | Where-Object { $_.Name -notin @("ADMIN$", "C$", "IPC$") } | Remove-SmbShare -Force
+}
+
+# ----------------------------------------------------
+# Command 39: Disable Inbound Firewall Rules for MS Edge, Search, Photos, Xbox, etc.
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+    Disable-NetFirewallRule -DisplayName "*Edge*"
+    Disable-NetFirewallRule -DisplayName "*Search*"
+    Disable-NetFirewallRule -DisplayName "*Photos*"
+    Disable-NetFirewallRule -DisplayName "*Xbox*"
+    Disable-NetFirewallRule -DisplayName "*MSN*"
+}
+
+# ----------------------------------------------------
+# Command 40: Enable Auditing for Both Success and Failure
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+   Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" | foreach-object {
+        auditpol /set /subcategory:* /success:enable /failure:enable
+   }
+}
 
 # ----------------------------------------------------------------
 # Update Firefox if it Needs Updating because yeah fuck that shit
@@ -868,7 +973,7 @@ If ($ManageUsers -eq "Y") {
 # ----------------------------------------------------
 
 # Prompt User to Clean Up and Restart
-$cleanupResponse = Read-Host "Do you want to re-enable the firewall? (Y/N)"
+$cleanupResponse = Read-Host "Do you want to re-enable the firewall? (yes/no)"
 if ($cleanupResponse -eq "yes") {
     Start-Job -ScriptBlock {
         try {
@@ -897,7 +1002,7 @@ if ($cleanupResponse -eq "yes") {
 # ----------------------------------------------------
 
 # Prompt User to Clean Up and Restart
-$cleanupResponse = Read-Host "Do you want to clean up temporary files and restart the system? (Y/N)"
+$cleanupResponse = Read-Host "Do you want to clean up temporary files and restart the system? (yes/no)"
 if ($cleanupResponse -eq "yes") {
     Start-Job -ScriptBlock {
         Write-Output "Cleaning up temporary files..."
