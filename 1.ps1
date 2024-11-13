@@ -12,7 +12,6 @@ try {
 }
 Write-Output "Controlled Folder Access configuration completed."
 
-
 # ----------------------------------------------------
 # Command 13: Remove Netcat Backdoor if It Exists
 # ----------------------------------------------------
@@ -690,6 +689,1214 @@ Start-Job -ScriptBlock {
    }
 }
 
+# ----------------------------------------------------
+# Command 41: Remove Internet Explorer if it's installed
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$ieProcess = Get-Process -Name "iexplore" -ErrorAction SilentlyContinue
+
+if ($ieProcess) {
+    Write-Output "Internet Explorer is running. Stopping process..."
+    Stop-Process -Name "iexplore" -Force
+    Write-Output "Internet Explorer process has been stopped."
+}
+
+# Remove Internet Explorer if it's installed
+$features = Get-WindowsOptionalFeature -Online | Where-Object {$_.FeatureName -eq "Internet-Explorer-Optional-amd64"}
+
+if ($features.State -eq "Enabled") {
+    Write-Output "Internet Explorer is installed. Removing..."
+    Disable-WindowsOptionalFeature -Online -FeatureName "Internet-Explorer-Optional-amd64" -NoRestart
+    Write-Output "Internet Explorer has been removed."
+} elseif ($features.State -eq "Disabled") {
+    Write-Output "Internet Explorer is already removed."
+} else {
+    Write-Output "Internet Explorer is not found on this system."
+}
+}
+
+# ----------------------------------------------------
+# Command 43: Configure LAN Manager to only send NTLMv2 responses
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+$regName = "LmCompatibilityLevel"
+$desiredValue = 5
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Setting LAN Manager to only send NTLMv2 responses..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "LAN Manager is now configured to only send NTLMv2 responses."
+} else {
+    Write-Output "LAN Manager is already configured to only send NTLMv2 responses."
+}
+}
+
+# ----------------------------------------------------
+# Command 44: Prohibit NULL session fallback
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+$regName = "RestrictAnonymous"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Prohibiting NULL session fallback..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "NULL session fallback is now prohibited."
+} else {
+    Write-Output "NULL session fallback is already prohibited."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 45: Configure system to not display the last logged-in user
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$regName = "DontDisplayLastUserName"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring system to not display the last logged-in user..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "System is now configured to not display the last logged-in user."
+} else {
+    Write-Output "System is already configured to not display the last logged-in user."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 46: Users cannot add or logon with Microsoft accounts
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$regName = "NoConnectedUser"
+$desiredValue = 3
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring system to prevent users from adding or logging on with Microsoft accounts..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "System is now configured to prevent users from adding or logging on with Microsoft accounts."
+} else {
+    Write-Output "System is already configured to prevent users from adding or logging on with Microsoft accounts."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 47: Users cannot add or logon with Microsoft accounts
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$regName = "NoConnectedUser"
+$desiredValue = 3
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring system to prevent users from adding or logging on with Microsoft accounts..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "System is now configured to prevent users from adding or logging on with Microsoft accounts."
+} else {
+    Write-Output "System is already configured to prevent users from adding or logging on with Microsoft accounts."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 48: Nobody can access Credential Manager as a trusted caller
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$regName = "DisableCredMgrAccess"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring system to prevent access to Credential Manager as a trusted caller..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "System is now configured to prevent access to Credential Manager as a trusted caller."
+} else {
+    Write-Output "System is already configured to prevent access to Credential Manager as a trusted caller."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 49: Core dumps are disabled on system crash
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl"
+$regName = "CrashDumpEnabled"
+$desiredValue = 0
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Disabling core dumps on system crash..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Core dumps are now disabled on system crash."
+} else {
+    Write-Output "Core dumps are already disabled on system crash."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 50: Windows Defender no longer runs in passive mode
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender"
+$regName = "ForceDefenderPassiveMode"
+$desiredValue = 0
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Disabling passive mode for Windows Defender..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Windows Defender is no longer running in passive mode."
+} else {
+    Write-Output "Windows Defender is already configured to not run in passive mode."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 51: Only administrators can install printer drivers
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\Software\Policies\Microsoft\Windows NT\Printers"
+$regName = "RestrictDriverInstallationToAdministrators"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Restricting printer driver installation to administrators only..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Printer driver installation is now restricted to administrators only."
+} else {
+    Write-Output "Printer driver installation is already restricted to administrators only."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 52: The system requires approval from an administrator before running unknown software (Defender Smartscreen)
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\Software\Policies\Microsoft\Windows\System"
+$regName = "EnableSmartScreen"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Enabling Defender SmartScreen to require administrator approval for unknown software..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Defender SmartScreen is now enabled to require administrator approval for unknown software."
+} else {
+    Write-Output "Defender SmartScreen is already configured to require administrator approval for unknown software."
+}
+}
+
+# ----------------------------------------------------
+# Command 53: Require approval from an administrator before running unknown software (Defender SmartScreen) and prevent bypass
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\Software\Policies\Microsoft\Windows\System"
+$regNameSmartScreen = "EnableSmartScreen"
+$regNameBypass = "ConfigureAppInstallControl"
+$desiredValueSmartScreen = 1
+$desiredValueBypass = 2
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Enable SmartScreen
+$currentValueSmartScreen = Get-ItemProperty -Path $regPath -Name $regNameSmartScreen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regNameSmartScreen -ErrorAction SilentlyContinue
+if ($currentValueSmartScreen -ne $desiredValueSmartScreen) {
+    Write-Output "Enabling Defender SmartScreen to require administrator approval for unknown software..."
+    Set-ItemProperty -Path $regPath -Name $regNameSmartScreen -Value $desiredValueSmartScreen
+    Write-Output "Defender SmartScreen is now enabled to require administrator approval for unknown software."
+} else {
+    Write-Output "Defender SmartScreen is already configured to require administrator approval for unknown software."
+}
+
+# Prevent bypassing SmartScreen
+$currentValueBypass = Get-ItemProperty -Path $regPath -Name $regNameBypass -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regNameBypass -ErrorAction SilentlyContinue
+if ($currentValueBypass -ne $desiredValueBypass) {
+    Write-Output "Configuring Defender SmartScreen to prevent bypassing attempts for unknown software..."
+    Set-ItemProperty -Path $regPath -Name $regNameBypass -Value $desiredValueBypass
+    Write-Output "Defender SmartScreen is now configured to prevent bypassing attempts for unknown software."
+} else {
+    Write-Output "Defender SmartScreen is already configured to prevent bypassing attempts for unknown software."
+}
+}
+
+# ----------------------------------------------------
+# Command 54: File/registry write failures are virtualized to per-user locations
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"
+$desiredValue = "RUNASINVOKER"
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+Write-Output "Enabling virtualization for file/registry write failures to per-user locations..."
+Set-ItemProperty -Path $regPath -Name "*" -Value $desiredValue
+Write-Output "File/registry write failures are now virtualized to per-user locations."
+}
+
+# ----------------------------------------------------
+# Command 55: App notifications do not show on the lock screen
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications"
+$regName = "NoToastApplicationNotificationOnLockScreen"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Disabling app notifications on the lock screen..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "App notifications are now disabled on the lock screen."
+} else {
+    Write-Output "App notifications are already disabled on the lock screen."
+}
+}
+
+# ----------------------------------------------------
+# Command 56: Incoming connections not matching a rule are blocked in Public profile
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$profile = "Public"
+$ruleName = "BlockInboundNotMatchingRule"
+$desiredAction = "Block"
+
+Write-Output "Configuring firewall to block incoming connections not matching a rule in the $profile profile..."
+Set-NetFirewallProfile -Profile $profile -DefaultInboundAction $desiredAction
+Write-Output "Incoming connections not matching a rule are now blocked in the $profile profile."
+}
+
+# ----------------------------------------------------
+# Command 57: Windows Automatic Updates are enabled
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
+$regName = "NoAutoUpdate"
+$desiredValue = 0
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Enabling Windows Automatic Updates..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Windows Automatic Updates are now enabled."
+} else {
+    Write-Output "Windows Automatic Updates are already enabled."
+}
+}
+
+# ----------------------------------------------------
+# Command 58: Malicious AMSI provider removed
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Microsoft\AMSI\Providers"
+
+if (Test-Path $regPath) {
+    $providers = Get-ChildItem -Path $regPath
+    foreach ($provider in $providers) {
+        Write-Output "Removing malicious AMSI provider: $($provider.Name)"
+        Remove-Item -Path $provider.PSPath -Recurse -Force
+    }
+    Write-Output "All detected AMSI providers have been removed."
+} else {
+    Write-Output "No AMSI providers found to remove."
+}
+}
+
+# ----------------------------------------------------
+# Command 59: Remove the malicious program HideUL if detected
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$hideULPath = "C:\Program Files\HideUL"
+
+if (Test-Path $hideULPath) {
+    Write-Output "Removing malicious program HideUL..."
+    Remove-Item -Path $hideULPath -Recurse -Force
+    Write-Output "Malicious program HideUL has been removed."
+} else {
+    Write-Output "HideUL program not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 60: Remove the malicious system driver WinDivert if detected
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$winDivertPath = "C:\Windows\System32\drivers\WinDivert.sys"
+
+if (Test-Path $winDivertPath) {
+    Write-Output "Removing malicious system driver WinDivert..."
+    Remove-Item -Path $winDivertPath -Force
+    Write-Output "Malicious system driver WinDivert has been removed."
+} else {
+    Write-Output "WinDivert driver not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 61: Ensure Notepad++ is up to date if installed
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$notepadPlusPlusPath = "C:\Program Files\Notepad++\notepad++.exe"
+
+if (Test-Path $notepadPlusPlusPath) {
+    Write-Output "Checking for Notepad++ updates..."
+    Start-Process -FilePath $notepadPlusPlusPath -ArgumentList "-updatecheck" -NoNewWindow -Wait
+    Write-Output "Notepad++ update check complete."
+} else {
+    Write-Output "Notepad++ is not installed."
+}
+}
+
+# ----------------------------------------------------
+# Command 62: Prohibit user access to the Store application
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore"
+$regName = "RemoveWindowsStore"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Prohibiting user access to the Store application..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "User access to the Store application is now prohibited."
+} else {
+    Write-Output "User access to the Store application is already prohibited."
+}
+}
+
+# ----------------------------------------------------
+# Command 63: Check if UEFI Secure Boot is enabled
+# ----------------------------------------------------
+
+# Check if UEFI Secure Boot is enabled
+$secureBoot = Confirm-SecureBootUEFI -ErrorAction SilentlyContinue
+
+if ($secureBoot -eq $false) {
+    Write-Output "UEFI Secure Boot is not enabled or not supported on this system. Please enable it manually in the BIOS/UEFI settings."
+} else {
+    Write-Output "UEFI Secure Boot is enabled."
+}
+
+# ----------------------------------------------------
+# Command 64: Check if Windows Update services are running
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$serviceName = "wuauserv"
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+if ($service -and $service.Status -eq 'Running') {
+    Write-Output "Windows Update service is running."
+} else {
+    Write-Output "Windows Update service is not running. Starting the service..."
+    Start-Service -Name $serviceName
+    Write-Output "Windows Update service has been started."
+}
+}
+
+# ----------------------------------------------------
+# Command 65: Check if Windows Event Log service is running
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$serviceName = "eventlog"
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+if ($service -and $service.Status -eq 'Running') {
+    Write-Output "Windows Event Log service is running."
+} elseif ($service -and $service.StartType -eq 'Disabled') {
+    Write-Output "Windows Event Log service is disabled. Enabling the service..."
+    Set-Service -Name $serviceName -StartupType Automatic
+    Start-Service -Name $serviceName
+    Write-Output "Windows Event Log service has been enabled and started."
+} else {
+    Write-Output "Windows Event Log service is not running. Starting the service..."
+    Start-Service -Name $serviceName
+    Write-Output "Windows Event Log service has been started."
+}
+}
+
+# ----------------------------------------------------
+# Command 66: Removed password from FileZilla welcome message
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Remove password from FileZilla welcome message configuration
+$configPath = "$env:APPDATA\FileZilla\filezilla.xml"
+
+if (Test-Path $configPath) {
+    [xml]$config = Get-Content -Path $configPath
+    $welcomeMessage = $config.Settings.WelcomeMessage
+
+    if ($welcomeMessage -ne $null) {
+        $welcomeMessage.InnerText = $welcomeMessage.InnerText -replace '(?i)password:\s*\S+', 'password: [removed]'
+        $config.Save($configPath)
+        Write-Output "Password has been removed from the FileZilla welcome message."
+    } else {
+        Write-Output "No welcome message found in FileZilla configuration."
+    }
+} else {
+    Write-Output "FileZilla configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 67: Configure RDP connections to require SSL
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Configure RDP connections to require SSL
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
+$regName = "SecurityLayer"
+$desiredValue = 2
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring RDP connections to require SSL..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "RDP connections are now configured to require SSL."
+} else {
+    Write-Output "RDP connections are already configured to require SSL."
+}
+}
+
+# ----------------------------------------------------
+# Command 68: Deny local logon for Remote Desktop Users
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Deny local logon for Remote Desktop Users
+$localPolicyPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$denyLogonLocally = "SeDenyInteractiveLogonRight"
+$group = "Remote Desktop Users"
+
+# Get the current list of groups/users denied local logon
+$currentValue = (Get-ItemProperty -Path $localPolicyPath -Name $denyLogonLocally -ErrorAction SilentlyContinue).$denyLogonLocally
+
+if ($currentValue -notlike "*$group*") {
+    Write-Output "Denying local logon for Remote Desktop Users..."
+    $newValue = if ($currentValue) { "$currentValue,$group" } else { "$group" }
+    Set-ItemProperty -Path $localPolicyPath -Name $denyLogonLocally -Value $newValue
+    Write-Output "Remote Desktop Users are now denied local logon."
+} else {
+    Write-Output "Remote Desktop Users are already denied local logon."
+}
+
+}
+
+# ----------------------------------------------------
+# Command 69: Configure RDP to require a secure RPC connection
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Configure RDP to require a secure RPC connection
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
+$regName = "UserAuthentication"
+$desiredValue = 1
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring RDP to require a secure RPC connection..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "RDP is now configured to require a secure RPC connection."
+} else {
+    Write-Output "RDP is already configured to require a secure RPC connection."
+}
+}
+
+# ----------------------------------------------------
+# Command 70: Remove SMB version 1 if it is installed
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Remove SMB version 1 if it is installed
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"
+$regName = "SMB1"
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -eq 1) {
+    Write-Output "SMB version 1 is enabled. Disabling..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value 0
+    Write-Output "SMB version 1 has been disabled."
+} else {
+    Write-Output "SMB version 1 is already disabled or not installed."
+}
+}
+
+# ----------------------------------------------------
+# Command 71: Ensure SMB requires packet signing
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Ensure SMB requires packet signing
+$regPathServer = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"
+$regNameServer = "EnableSecuritySignature"
+$desiredValueServer = 1
+
+$regPathWorkstation = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters"
+$regNameWorkstation = "EnableSecuritySignature"
+$desiredValueWorkstation = 1
+
+# Configure SMB Server to require packet signing
+$currentValueServer = Get-ItemProperty -Path $regPathServer -Name $regNameServer -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regNameServer -ErrorAction SilentlyContinue
+
+if ($currentValueServer -ne $desiredValueServer) {
+    Write-Output "Configuring SMB Server to require packet signing..."
+    Set-ItemProperty -Path $regPathServer -Name $regNameServer -Value $desiredValueServer
+    Write-Output "SMB Server is now configured to require packet signing."
+} else {
+    Write-Output "SMB Server is already configured to require packet signing."
+}
+
+# Configure SMB Workstation to require packet signing
+$currentValueWorkstation = Get-ItemProperty -Path $regPathWorkstation -Name $regNameWorkstation -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regNameWorkstation -ErrorAction SilentlyContinue
+
+if ($currentValueWorkstation -ne $desiredValueWorkstation) {
+    Write-Output "Configuring SMB Workstation to require packet signing..."
+    Set-ItemProperty -Path $regPathWorkstation -Name $regNameWorkstation -Value $desiredValueWorkstation
+    Write-Output "SMB Workstation is now configured to require packet signing."
+} else {
+    Write-Output "SMB Workstation is already configured to require packet signing."
+}
+}
+
+# ----------------------------------------------------
+# Command 72: Ensure SMB does not send plaintext passwords
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Ensure SMB does not send plaintext passwords
+$regPathWorkstation = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters"
+$regNamePlaintextPassword = "EnablePlainTextPassword"
+$desiredValue = 0
+
+$currentValue = Get-ItemProperty -Path $regPathWorkstation -Name $regNamePlaintextPassword -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regNamePlaintextPassword -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring SMB to not send plaintext passwords..."
+    Set-ItemProperty -Path $regPathWorkstation -Name $regNamePlaintextPassword -Value $desiredValue
+    Write-Output "SMB is now configured to not send plaintext passwords."
+} else {
+    Write-Output "SMB is already configured to not send plaintext passwords."
+}
+}
+
+# ----------------------------------------------------
+# Command 73: Configure the system to use FIPS 140 compliant cryptographic algorithms
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Configure the system to use FIPS 140 compliant cryptographic algorithms
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+$regName = "FIPSAlgorithmPolicy"
+$desiredValue = 1
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Configuring the system to use FIPS 140 compliant cryptographic algorithms..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "The system is now configured to use FIPS 140 compliant cryptographic algorithms."
+} else {
+    Write-Output "The system is already configured to use FIPS 140 compliant cryptographic algorithms."
+}
+}
+
+# ----------------------------------------------------
+# Command 74:  Enable file and registry write failure virtualization to per-user locations
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Enable file and registry write failure virtualization to per-user locations
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"
+$desiredValue = "RUNASINVOKER"
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+Write-Output "Enabling virtualization for file and registry write failures to per-user locations..."
+Set-ItemProperty -Path $regPath -Name "*" -Value $desiredValue
+Write-Output "File and registry write failures are now virtualized to per-user locations."
+}
+
+# ----------------------------------------------------
+# Command 75: Removed hidden network shares
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$shares = Get-WmiObject -Query "SELECT * FROM Win32_Share" | Where-Object { $_.Name -like '*$' }
+
+foreach ($share in $shares) {
+    Write-Output "Removing hidden network share: $($share.Name)"
+    Remove-WmiObject -Path $share.__PATH
+}
+
+Write-Output "All hidden network shares have been removed."
+}
+
+# ----------------------------------------------------
+# Command 76: Grant full control over C:\ftp to a specified user group
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Grant full control over C:\ftp to a specified user group
+$ftpFolderPath = "C:\ftp"
+$ftpUsersGroup = "ftpusers"
+
+# Create the folder if it does not exist
+if (-not (Test-Path -Path $ftpFolderPath)) {
+    Write-Output "Folder C:\ftp does not exist. Creating the folder..."
+    New-Item -Path $ftpFolderPath -ItemType Directory | Out-Null
+}
+
+# Get the ACL for the folder and set permissions
+$acl = Get-Acl -Path $ftpFolderPath
+$ftpUsers = New-Object System.Security.Principal.NTAccount($ftpUsersGroup)
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($ftpUsers, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+
+$acl.SetAccessRule($accessRule)
+Set-Acl -Path $ftpFolderPath -AclObject $acl
+
+Write-Output "Full control over C:\ftp has been granted to $ftpUsersGroup."
+}
+
+# ----------------------------------------------------
+# Command 77: Grant read-only privileges over C:\ftp\aperture-moon to Authenticated Users
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Grant read-only privileges over C:\ftp\aperture-moon to Authenticated Users
+$folderPath = "C:\ftp\aperture-moon"
+$authUsersGroup = "Authenticated Users"
+
+# Create the folder if it does not exist
+if (-not (Test-Path -Path $folderPath)) {
+    Write-Output "Folder C:\ftp\aperture-moon does not exist. Creating the folder..."
+    New-Item -Path $folderPath -ItemType Directory | Out-Null
+}
+
+# Get the ACL for the folder and set permissions
+$acl = Get-Acl -Path $folderPath
+$authUsers = New-Object System.Security.Principal.NTAccount($authUsersGroup)
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($authUsers, "Read", "ContainerInherit,ObjectInherit", "None", "Allow")
+
+$acl.SetAccessRule($accessRule)
+Set-Acl -Path $folderPath -AclObject $acl
+
+Write-Output "Read-only privileges over C:\ftp\aperture-moon have been granted to Authenticated Users."
+}
+
+# ----------------------------------------------------
+# Command 78: Remove unauthorized FileZilla user "FTP Admin"
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Remove unauthorized FileZilla user "FTP Admin"
+$configPath = "$env:APPDATA\FileZilla\filezilla.xml"
+
+if (Test-Path $configPath) {
+    [xml]$config = Get-Content -Path $configPath
+    $userNodes = $config.DocumentElement.SelectNodes("//User[UserName='FTP Admin']")
+
+    foreach ($userNode in $userNodes) {
+        Write-Output "Removing unauthorized user 'FTP Admin'..."
+        $userNode.ParentNode.RemoveChild($userNode) | Out-Null
+    }
+
+    $config.Save($configPath)
+    Write-Output "Unauthorized user 'FTP Admin' has been removed."
+} else {
+    Write-Output "FileZilla configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 79: Ensure FileZilla server uses explicit FTP over TLS
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure FileZilla server uses explicit FTP over TLS
+$configPath = "$env:APPDATA\FileZilla\filezilla.xml"
+
+if (Test-Path $configPath) {
+    [xml]$config = Get-Content -Path $configPath
+    $tlsNode = $config.DocumentElement.SelectSingleNode("//Settings/ExplicitFTPOverTLS")
+
+    if ($tlsNode -eq $null) {
+        Write-Output "TLS configuration not found. Adding Explicit FTP over TLS setting..."
+        $settingsNode = $config.DocumentElement.SelectSingleNode("//Settings")
+        $tlsNode = $config.CreateElement("ExplicitFTPOverTLS")
+        $tlsNode.InnerText = "1"
+        $settingsNode.AppendChild($tlsNode) | Out-Null
+    } else {
+        Write-Output "Setting FileZilla server to use explicit FTP over TLS..."
+        $tlsNode.InnerText = "1"
+    }
+
+    $config.Save($configPath)
+    Write-Output "FileZilla server is now configured to use explicit FTP over TLS."
+} else {
+    Write-Output "FileZilla configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 80: Ensure FileZilla server automatically checks for updates
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure FileZilla server automatically checks for updates
+$configPath = "$env:APPDATA\FileZilla\filezilla.xml"
+
+if (Test-Path $configPath) {
+    [xml]$config = Get-Content -Path $configPath
+    $updateNode = $config.DocumentElement.SelectSingleNode("//Settings/AutoUpdateCheck")
+
+    if ($updateNode -eq $null) {
+        Write-Output "Update check configuration not found. Adding automatic update check setting..."
+        $settingsNode = $config.DocumentElement.SelectSingleNode("//Settings")
+        $updateNode = $config.CreateElement("AutoUpdateCheck")
+        $updateNode.InnerText = "1"
+        $settingsNode.AppendChild($updateNode) | Out-Null
+    } else {
+        Write-Output "Setting FileZilla server to automatically check for updates..."
+        $updateNode.InnerText = "1"
+    }
+
+    $config.Save($configPath)
+    Write-Output "FileZilla server is now configured to automatically check for updates."
+} else {
+    Write-Output "FileZilla configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 81: Ensure SSH ignores Rhosts configuration
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure SSH ignores Rhosts configuration (PowerShell version)
+$sshConfigPath = "C:\ProgramData\ssh\sshd_config"
+
+if (Test-Path $sshConfigPath) {
+    (Get-Content $sshConfigPath) -replace '^#?IgnoreRhosts.*', 'IgnoreRhosts yes' | Set-Content $sshConfigPath
+    Write-Output "SSH is now configured to ignore Rhosts."
+} else {
+    Write-Output "SSH configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 82: Deny SSH access for user 'Chell'
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Deny SSH access for user 'Chell'
+$sshConfigPath = "C:\ProgramData\ssh\sshd_config"
+
+if (Test-Path $sshConfigPath) {
+    (Get-Content $sshConfigPath) -replace '^#?DenyUsers.*', 'DenyUsers Chell' | Set-Content $sshConfigPath
+    Write-Output "SSH access for user 'Chell' has been denied."
+} else {
+    Write-Output "SSH configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 83: Ensure SSH does not permit empty passwords
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure SSH does not permit empty passwords
+$sshConfigPath = "C:\ProgramData\ssh\sshd_config"
+
+if (Test-Path $sshConfigPath) {
+    (Get-Content $sshConfigPath) -replace '^#?PermitEmptyPasswords.*', 'PermitEmptyPasswords no' | Set-Content $sshConfigPath
+    Write-Output "SSH is now configured to not permit empty passwords."
+} else {
+    Write-Output "SSH configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 84: Ensure SSH does not permit empty passwords and set SSH port to 2319
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure SSH does not permit empty passwords and set SSH port to 2319
+$sshConfigPath = "C:\ProgramData\ssh\sshd_config"
+
+if (Test-Path $sshConfigPath) {
+    (Get-Content $sshConfigPath) -replace '^#?PermitEmptyPasswords.*', 'PermitEmptyPasswords no' |
+    Set-Content $sshConfigPath
+    (Get-Content $sshConfigPath) -replace '^#?Port.*', 'Port 2319' | Set-Content $sshConfigPath
+    Write-Output "SSH is now configured to not permit empty passwords and use port 2319."
+} else {
+    Write-Output "SSH configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 85: Ensure SSH does not permit empty passwords, set SSH port to 2319, and disable password authentication
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure SSH does not permit empty passwords, set SSH port to 2319, and disable password authentication
+$sshConfigPath = "C:\ProgramData\ssh\sshd_config"
+
+if (Test-Path $sshConfigPath) {
+    (Get-Content $sshConfigPath) -replace '^#?PermitEmptyPasswords.*', 'PermitEmptyPasswords no' |
+    Set-Content $sshConfigPath
+    (Get-Content $sshConfigPath) -replace '^#?Port.*', 'Port 2319' | Set-Content $sshConfigPath
+    (Get-Content $sshConfigPath) -replace '^#?PasswordAuthentication.*', 'PasswordAuthentication no' | Set-Content $sshConfigPath
+    Write-Output "SSH is now configured to not permit empty passwords, use port 2319, and disable password authentication."
+} else {
+    Write-Output "SSH configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 86: Ensure PuTTY uses SSH protocol 2
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure PuTTY uses SSH protocol 2
+$puttyConfigPath = "C:\Users\$env:USERNAME\AppData\Roaming\PuTTY\sessions"
+
+if (Test-Path $puttyConfigPath) {
+    Get-ChildItem -Path $puttyConfigPath -Filter "*.reg" | ForEach-Object {
+        (Get-Content $_.FullName) -replace '^#?Protocol=.*', 'Protocol=2' | Set-Content $_.FullName
+        Write-Output "PuTTY session configuration updated to use SSH protocol 2."
+    }
+} else {
+    Write-Output "PuTTY session configuration folder not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 87: Ensure PuTTY omits known password fields in packet logs
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure PuTTY omits known password fields in packet logs
+$puttyConfigPath = "C:\Users\$env:USERNAME\AppData\Roaming\PuTTY\sessions"
+
+if (Test-Path $puttyConfigPath) {
+    Get-ChildItem -Path $puttyConfigPath -Filter "*.reg" | ForEach-Object {
+        (Get-Content $_.FullName) -replace '^#?LogKnownPasswordFields=.*', 'LogKnownPasswordFields=no' | Set-Content $_.FullName
+        Write-Output "PuTTY session configuration updated to omit known password fields in packet logs."
+    }
+} else {
+    Write-Output "PuTTY session configuration folder not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 88: Ensure VLC notifies when updates are available
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure VLC notifies when updates are available
+$vlcConfigPath = "$env:APPDATA\vlc\vlcrc"
+
+if (Test-Path $vlcConfigPath) {
+    (Get-Content $vlcConfigPath) -replace '^#?qt-updates-notif=.*', 'qt-updates-notif=1' | Set-Content $vlcConfigPath
+    Write-Output "VLC configuration updated to notify when updates are available."
+} else {
+    Write-Output "VLC configuration file not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 89: Ensure OpenSSH Server is active
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Kinda untested
+# Ensure OpenSSH Server is active
+$serviceName = "sshd"
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+if ($service -eq $null) {
+    Write-Output "OpenSSH Server service not found. Please ensure OpenSSH Server is installed."
+} elseif ($service.Status -eq 'Running') {
+    Write-Output "OpenSSH Server is active and running."
+} else {
+    Write-Output "OpenSSH Server is not running. Starting the service..."
+    Start-Service -Name $serviceName
+    Write-Output "OpenSSH Server has been started."
+}
+}
+
+# ----------------------------------------------------
+# Command 90: Ensure FileZilla Server is active
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock { #Untested
+# Ensure FileZilla Server is active
+$serviceName = "FileZilla Server"
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+if ($service -eq $null) {
+    Write-Output "FileZilla Server service not found. Please ensure FileZilla Server is installed."
+} elseif ($service.Status -eq 'Running') {
+    Write-Output "FileZilla Server is active and running."
+} else {
+    Write-Output "FileZilla Server is not running. Starting the service..."
+    Start-Service -Name $serviceName
+    Write-Output "FileZilla Server has been started."
+}
+}
+
+# ----------------------------------------------------
+# Command 91: Ensure SSH is allowed through the firewall
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Ensure SSH is allowed through the firewall
+$ruleName = "OpenSSH-Server-In-TCP"
+$firewallRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+
+if ($firewallRule -eq $null) {
+    Write-Output "Firewall rule for SSH not found. Creating rule to allow SSH through the firewall..."
+    New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Protocol TCP -LocalPort 22 -Action Allow
+    Write-Output "Firewall rule to allow SSH through the firewall has been created."
+} elseif ($firewallRule.Enabled -eq 'False') {
+    Write-Output "Firewall rule for SSH is disabled. Enabling rule..."
+    Enable-NetFirewallRule -DisplayName $ruleName
+    Write-Output "Firewall rule to allow SSH through the firewall has been enabled."
+} else {
+    Write-Output "Firewall rule to allow SSH through the firewall is already active."
+}
+}
+
+# ----------------------------------------------------
+# Command 92: Ensure FileZilla Server is allowed through the firewall
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Ensure FileZilla Server is allowed through the firewall
+$ruleName = "FileZilla-Server-In-TCP"
+$firewallRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+
+if ($firewallRule -eq $null) {
+    Write-Output "Firewall rule for FileZilla Server not found. Creating rule to allow FileZilla Server through the firewall..."
+    New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Protocol TCP -LocalPort 21 -Action Allow
+    Write-Output "Firewall rule to allow FileZilla Server through the firewall has been created."
+} elseif ($firewallRule.Enabled -eq 'False') {
+    Write-Output "Firewall rule for FileZilla Server is disabled. Enabling rule..."
+    Enable-NetFirewallRule -DisplayName $ruleName
+    Write-Output "Firewall rule to allow FileZilla Server through the firewall has been enabled."
+} else {
+    Write-Output "Firewall rule to allow FileZilla Server through the firewall is already active."
+}
+}
+
+# ----------------------------------------------------
+# Command 93: Ensure UPnP is not enabled
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Ensure UPnP is not enabled
+$regPath = "HKLM:\SOFTWARE\Microsoft\DirectPlayNATHelp\DPNHUPnP"
+$regName = "UPnPMode"
+$desiredValue = 0
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Disabling UPnP..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "UPnP has been disabled."
+} else {
+    Write-Output "UPnP is already disabled."
+}
+}
+
+# ----------------------------------------------------
+# Command 94: Automatically deny elevation prompts for standard users
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Automatically deny elevation prompts for standard users
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$regName = "ConsentPromptBehaviorUser"
+$desiredValue = 0
+
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Automatically denying elevation prompts for standard users..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Elevation prompts for standard users are now automatically denied."
+} else {
+    Write-Output "Elevation prompts for standard users are already automatically denied."
+}
+}
+
+# ----------------------------------------------------
+# Command 95: Remove reverse shell backdoor if detected
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Remove reverse shell backdoor if detected
+$backdoorPath = "C:\Windows\System32\revshell.exe"
+
+if (Test-Path $backdoorPath) {
+    Write-Output "Removing reverse shell backdoor..."
+    Remove-Item -Path $backdoorPath -Force
+    Write-Output "Reverse shell backdoor has been removed."
+} else {
+    Write-Output "No reverse shell backdoor found."
+}
+}
+
+
 # ----------------------------------------------------------------
 # Update Firefox if it Needs Updating because yeah fuck that shit
 # ----------------------------------------------------------------
@@ -736,6 +1943,73 @@ try {
 Write-Output "Firefox update process completed."
 }
 
+# ----------------------------------------------------
+# Firefox shit to do after firefox is updated
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Firefox popup blocker enabled
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Enabling popup blocker for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("dom.disable_open_during_load", true);'
+            Write-Output "Popup blocker enabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
+
+Start-Job -ScriptBlock {
+# Enable "Block dangerous and deceptive content" in Firefox
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Enabling 'Block dangerous and deceptive content' for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("browser.safebrowsing.malware.enabled", true);'
+            Add-Content -Path $prefsFile -Value 'user_pref("browser.safebrowsing.phishing.enabled", true);'
+            Write-Output "'Block dangerous and deceptive content' enabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
+
+Start-Job -ScriptBlock {
+# Disable Firefox profiles and sync
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Disabling profiles and sync for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("services.sync.enabled", false);'
+            Write-Output "Profiles and sync disabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
 
 #-----------------------------------------------------
 # User Management Script
