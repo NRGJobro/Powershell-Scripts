@@ -2247,8 +2247,8 @@ If ($ManageUsers -eq "Y") {
 # ----------------------------------------------------
 
 # Prompt User to Clean Up and Restart
-$cleanupResponse = Read-Host "Do you want to re-enable the firewall? (yes/no)"
-if ($cleanupResponse -eq "yes") {
+$cleanupResponse = Read-Host "Do you want to re-enable the firewall? (y/n)"
+if ($cleanupResponse -eq "y") {
     Start-Job -ScriptBlock {
         try {
   	  # Enable Windows Defender ATP with PowerShell
@@ -2276,8 +2276,8 @@ if ($cleanupResponse -eq "yes") {
 # ----------------------------------------------------
 
 # Prompt User to Clean Up and Restart
-$cleanupResponse = Read-Host "Do you want to clean up temporary files and restart the system? (yes/no)"
-if ($cleanupResponse -eq "yes") {
+$cleanupResponse = Read-Host "Do you want to clean up temporary files and restart the system? (y/n)"
+if ($cleanupResponse -eq "y") {
     Start-Job -ScriptBlock {
         Write-Output "Cleaning up temporary files..."
         Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
