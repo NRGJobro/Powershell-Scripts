@@ -1,4 +1,10 @@
 # ----------------------------------------------------
+# Ask if on server
+# ----------------------------------------------------
+
+$serverQuestionResponse = Read-Host "Are you on Windows Server? (y/n)"
+
+# ----------------------------------------------------
 # Turn off shit i need to turn off for bypass yay
 # ----------------------------------------------------
 
@@ -1073,17 +1079,30 @@ Write-Output "Incoming connections not matching a rule are now blocked in the $p
 # ----------------------------------------------------
 
 Start-Job -ScriptBlock {
+# ----------------------------------------------------
+# Command 57: Ensure Windows Automatic Updates are enabled
+# ----------------------------------------------------
+
 $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
 $regName = "NoAutoUpdate"
 $desiredValue = 0
 
+# Check if the registry path exists, create it if it doesn't
 if (-not (Test-Path $regPath)) {
     Write-Output "Creating registry path: $regPath"
     New-Item -Path $regPath -Force | Out-Null
 }
 
+# Check the current value of the 'NoAutoUpdate' registry key
 $currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
 
+# If the value doesn't exist, assume updates are disabled
+if ($null -eq $currentValue) {
+    Write-Output "'NoAutoUpdate' registry key not found. Assuming updates are disabled."
+    $currentValue = 1 # Default to disabled if the value doesn't exist
+}
+
+# Enable Windows Automatic Updates by setting NoAutoUpdate to 0
 if ($currentValue -ne $desiredValue) {
     Write-Output "Enabling Windows Automatic Updates..."
     Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
@@ -1091,6 +1110,33 @@ if ($currentValue -ne $desiredValue) {
 } else {
     Write-Output "Windows Automatic Updates are already enabled."
 }
+
+# Optionally, ensure that the AUOptions setting is correctly configured (for example, to automatically download and install updates)
+$auOptionsPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
+$auOptionsName = "AUOptions"
+$desiredAUOptionsValue = 4  # This sets updates to automatically download and install
+
+if (-not (Test-Path $auOptionsPath)) {
+    Write-Output "Creating registry path: $auOptionsPath"
+    New-Item -Path $auOptionsPath -Force | Out-Null
+}
+
+$currentAUOptions = Get-ItemProperty -Path $auOptionsPath -Name $auOptionsName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $auOptionsName -ErrorAction SilentlyContinue
+
+# Set AUOptions if it's not configured correctly
+if ($currentAUOptions -ne $desiredAUOptionsValue) {
+    Write-Output "Setting AUOptions to $desiredAUOptionsValue (Automatic download and installation)..."
+    Set-ItemProperty -Path $auOptionsPath -Name $auOptionsName -Value $desiredAUOptionsValue
+    Write-Output "AUOptions set to $desiredAUOptionsValue. Automatic Updates will now be downloaded and installed automatically."
+} else {
+    Write-Output "AUOptions are already set correctly."
+}
+
+# Trigger Windows Update Service to refresh settings
+Write-Output "Refreshing Windows Update service..."
+Start-Service -Name "wuauserv"
+
+Write-Output "Windows Automatic Updates are now fully enabled and configured."
 }
 
 # ----------------------------------------------------
@@ -1501,7 +1547,7 @@ Write-Output "Full control over C:\ftp has been granted to $ftpUsersGroup."
 # Command 77: Grant read-only privileges over C:\ftp\aperture-moon to Authenticated Users
 # ----------------------------------------------------
 
-Start-Job -ScriptBlock {
+Start-Job -ScriptBlock { #read-only aperture-moon
 # Grant read-only privileges over C:\ftp\aperture-moon to Authenticated Users
 $folderPath = "C:\ftp\aperture-moon"
 $authUsersGroup = "Authenticated Users"
@@ -2241,6 +2287,285 @@ If ($ManageUsers -eq "Y") {
 } else {
     Write-Host "Skipping local user account management."
 }
+}
+
+# ----------------------------------------------------
+# Server Shit
+# ----------------------------------------------------
+
+if ($serverQuestionResponse -eq "y") {
+# Start the job to check and install updates in the background
+#Start-Job -ScriptBlock {
+    $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
+$regName = "NoAutoUpdate"
+$desiredValue = 0
+
+# Check if the registry path exists, create it if it doesn't
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Check the current value of the 'NoAutoUpdate' registry key
+$currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $regName -ErrorAction SilentlyContinue
+
+# If the value doesn't exist, assume updates are disabled
+if ($null -eq $currentValue) {
+    Write-Output "'NoAutoUpdate' registry key not found. Assuming updates are disabled."
+    $currentValue = 1 # Default to disabled if the value doesn't exist
+}
+
+# Enable Windows Automatic Updates by setting NoAutoUpdate to 0
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Enabling Windows Automatic Updates..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Windows Automatic Updates are now enabled."
+} else {
+    Write-Output "Windows Automatic Updates are already enabled."
+}
+
+# Optionally, ensure that the AUOptions setting is correctly configured (for example, to automatically download and install updates)
+$auOptionsPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
+$auOptionsName = "AUOptions"
+$desiredAUOptionsValue = 4  # This sets updates to automatically download and install
+
+if (-not (Test-Path $auOptionsPath)) {
+    Write-Output "Creating registry path: $auOptionsPath"
+    New-Item -Path $auOptionsPath -Force | Out-Null
+}
+
+$currentAUOptions = Get-ItemProperty -Path $auOptionsPath -Name $auOptionsName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty $auOptionsName -ErrorAction SilentlyContinue
+
+# Set AUOptions if it's not configured correctly
+if ($currentAUOptions -ne $desiredAUOptionsValue) {
+    Write-Output "Setting AUOptions to $desiredAUOptionsValue (Automatic download and installation)..."
+    Set-ItemProperty -Path $auOptionsPath -Name $auOptionsName -Value $desiredAUOptionsValue
+    Write-Output "AUOptions set to $desiredAUOptionsValue. Automatic Updates will now be downloaded and installed automatically."
+} else {
+    Write-Output "AUOptions are already set correctly."
+}
+
+$wuauserv = Get-Service -Name wuauserv
+if ($wuauserv.Status -ne 'Running') {
+    Write-Output "Windows Update service is not running. Starting the service..."
+    Start-Service -Name wuauserv
+} else {
+    Write-Output "Windows Update service is already running."
+}
+
+Write-Output "Manually checking for updates, downloading, and installing..."
+
+try {
+    # Start the update scan (Check for updates)
+    Start-Process -FilePath "C:\Windows\System32\usoclient.exe" -ArgumentList "StartScan"
+    Write-Output "Started the update check. This will trigger the 'Check for updates' process."
+
+    # Start the download process (if updates are available)
+    Start-Process -FilePath "C:\Windows\System32\usoclient.exe" -ArgumentList "StartDownload"
+    Write-Output "Started downloading updates."
+
+    # Start the installation process (Once download is done)
+    Start-Process -FilePath "C:\Windows\System32\usoclient.exe" -ArgumentList "StartInstall"
+    Write-Output "Started installing downloaded updates."
+
+} catch {
+    Write-Output "An error occurred while triggering the update process: $_"
+}
+
+Write-Output "Windows Automatic Updates are now fully enabled, and the update check, download, and installation have been triggered."
+#} -ArgumentList $null
+
+# ----------------------------------------------------
+# Command 96: Uninstall BitTorrent if detected
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$bittorrentName = "BitTorrent"
+
+# Check if BitTorrent is running
+$bittorrentProcess = Get-Process -Name "bittorrent" -ErrorAction SilentlyContinue
+
+if ($bittorrentProcess) {
+    Write-Output "Stopping BitTorrent process..."
+    Stop-Process -Name "bittorrent" -Force
+    Write-Output "BitTorrent process has been stopped."
+}
+
+# Attempt to uninstall BitTorrent from AppData\Roaming
+$bittorrentPath = "$env:APPDATA\BitTorrent"
+
+if (Test-Path -Path "$bittorrentPath") {
+    Write-Output "Found BitTorrent in AppData\Roaming. Removing..."
+    Remove-Item -Path "$bittorrentPath" -Recurse -Force
+    Write-Output "BitTorrent has been removed successfully."
+}
+
+if (-not (Get-Process -Name "bittorrent" -ErrorAction SilentlyContinue)) {
+    Write-Output "BitTorrent is not installed or has been successfully removed."
+} else {
+    Write-Output "BitTorrent could not be uninstalled or was not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 97: Uninstall Wireshark if detected
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+$wiresharkName = "Wireshark"
+
+# Check if Wireshark is running
+$wiresharkProcess = Get-Process -Name "wireshark" -ErrorAction SilentlyContinue
+
+if ($wiresharkProcess) {
+    Write-Output "Stopping Wireshark process..."
+    Stop-Process -Name "wireshark" -Force
+    Write-Output "Wireshark process has been stopped."
+}
+
+# Attempt to uninstall Wireshark using the uninstall executable directly from its install location
+$possiblePaths = @(
+    "$env:ProgramFiles\Wireshark",
+    "$env:ProgramFiles(x86)\Wireshark"
+)
+
+foreach ($path in $possiblePaths) {
+    if (Test-Path -Path "$path\uninstall.exe") {
+        Write-Output "Found Wireshark uninstall executable. Uninstalling..."
+        Start-Process -FilePath "$path\uninstall.exe" -ArgumentList "/S" -NoNewWindow -Wait
+        Write-Output "Wireshark has been uninstalled successfully."
+        break
+    }
+}
+
+if (-not (Get-Process -Name "wireshark" -ErrorAction SilentlyContinue)) {
+    Write-Output "Wireshark is not installed or has been successfully removed."
+} else {
+    Write-Output "Wireshark could not be uninstalled or was not found."
+}
+}
+
+# ----------------------------------------------------
+# Command 98: Removed Adaware Web Companion
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Check if the application is running and close it if necessary
+$processName = "WebCompanion"
+$process = Get-Process -Name $processName -ErrorAction SilentlyContinue
+
+if ($process) {
+    Write-Output "Web Companion is running. Attempting to close it..."
+    Stop-Process -Name $processName -Force
+    Start-Sleep -Seconds 3
+    $process = Get-Process -Name $processName -ErrorAction SilentlyContinue
+    if ($process) {
+        Write-Output "Failed to close Web Companion process. Please ensure no other program is using it and try again."
+        exit 1
+    }
+    Write-Output "Web Companion process stopped."
+} else {
+    Write-Output "Web Companion process is not running."
+}
+
+# Delete the Web Companion executable
+$webCompanionExePath = "C:\Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanion.exe"
+if (Test-Path -Path $webCompanionExePath) {
+    try {
+        Write-Output "Attempting to delete Web Companion executable..."
+        Remove-Item -Path $webCompanionExePath -Force -ErrorAction Stop
+        Write-Output "Web Companion executable successfully deleted."
+    } catch {
+        Write-Output "Failed to delete Web Companion executable. Please check permissions or try running PowerShell as an administrator."
+    }
+} else {
+    Write-Output "Web Companion executable not found. It may have already been removed."
+}
+}
+
+# ----------------------------------------------------
+# Command 99: Limit local use of blank passwords to console only
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+Write-Output "Ensuring local use of blank passwords is limited to console logon only..."
+try {
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LimitBlankPasswordUse" -Value 1 -ErrorAction Stop
+    Write-Output "Local use of blank passwords limited to console logon only."
+} catch {
+    Write-Output "Failed to set policy to limit local use of blank passwords. Please check permissions or try running PowerShell as an administrator."
+}
+}
+
+# ----------------------------------------------------
+# Firefox shit to do after firefox is updated
+# ----------------------------------------------------
+
+Start-Job -ScriptBlock {
+# Firefox popup blocker enabled
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Enabling popup blocker for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("dom.disable_open_during_load", true);'
+            Write-Output "Popup blocker enabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
+
+Start-Job -ScriptBlock {
+# Enable "Block dangerous and deceptive content" in Firefox
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Enabling 'Block dangerous and deceptive content' for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("browser.safebrowsing.malware.enabled", true);'
+            Add-Content -Path $prefsFile -Value 'user_pref("browser.safebrowsing.phishing.enabled", true);'
+            Write-Output "'Block dangerous and deceptive content' enabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
+
+Start-Job -ScriptBlock {
+# Disable Firefox profiles and sync
+$firefoxPrefsPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+$profileDirs = Get-ChildItem -Path $firefoxPrefsPath -Directory -ErrorAction SilentlyContinue
+
+if ($profileDirs) {
+    foreach ($profile in $profileDirs) {
+        $prefsFile = "$($profile.FullName)\prefs.js"
+        if (Test-Path $prefsFile) {
+            Write-Output "Disabling profiles and sync for Firefox profile: $($profile.Name)"
+            Add-Content -Path $prefsFile -Value 'user_pref("services.sync.enabled", false);'
+            Write-Output "Profiles and sync disabled for Firefox profile: $($profile.Name)"
+        } else {
+            Write-Output "prefs.js not found in profile: $($profile.Name)"
+        }
+    }
+} else {
+    Write-Output "No Firefox profiles found."
+}
+}
+} else {
+    Write-Output "Skipping server stuff."
 }
 
 # ----------------------------------------------------
