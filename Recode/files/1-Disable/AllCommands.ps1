@@ -8,7 +8,7 @@ $ps1Files = Get-ChildItem -Path $folderPath -Filter *.ps1
 foreach ($file in $ps1Files) {
     # Condition to skip files named 'SkipThisFile.ps1'
     if ($file.Name -eq 'AllCommands.ps1') {
-        Write-Host "Skipping $($file.FullName)..."
+        #Write-Host "Skipping $($file.FullName)..."
         continue  # Skip to the next file in the loop
     }
 

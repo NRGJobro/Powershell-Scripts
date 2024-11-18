@@ -12,7 +12,7 @@ foreach ($file in $ps1Files) {
         continue  # Skip to the next file in the loop
     }
 
-    Write-Host "Running $($file.FullName)..."
+    #Write-Host "Running $($file.FullName)..."
     & $file.FullName  # Run the script
 }
 
