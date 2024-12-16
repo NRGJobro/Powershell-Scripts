@@ -15,7 +15,7 @@ $currentValue = Get-ItemProperty -Path $regPath -Name $regName -ErrorAction Sile
 # If the value doesn't exist, assume updates are disabled
 if ($null -eq $currentValue) {
     Write-Output "'NoAutoUpdate' registry key not found. Assuming updates are disabled."
-    $currentValue = 1 # Default to disabled if the value doesn't exist
+    $currentValue = 0 # Default to enabled if the value doesn't exist
 }
 
 # Enable Windows Automatic Updates by setting NoAutoUpdate to 0
